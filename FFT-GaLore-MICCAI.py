@@ -34,41 +34,41 @@ from transformers.utils.versions import require_version
 from huggingface_hub import login
 login(token="my_token")
 
-# ------------------------- 参数解析 -------------------------
+# ------------------------- Argument Parsing -------------------------
 def parse_args():
     parser = argparse.ArgumentParser(description="Fine-tune LLaMA with GaLore")
-    # 模型和 tokenizer 配置
-    parser.add_argument("--model_name", type=str, default="meta-llama/Llama-3.2-3B-Instruct", help="预训练模型名称或路径")
-    # 数据路径
-    parser.add_argument("--train_file", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Train/Train.csv", help="训练数据 CSV 路径")
-    parser.add_argument("--val_file", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/Test.csv", help="验证数据 CSV 路径")
-    # 训练超参数
-    parser.add_argument("--num_epochs", type=int, default=5, help="训练轮数")
-    parser.add_argument("--batch_size", type=int, default=6, help="批大小")
-    parser.add_argument("--lr", type=float, default=3e-7, help="学习率")
+    # Model and tokenizer configuration
+    parser.add_argument("--model_name", type=str, default="meta-llama/Llama-3.2-3B-Instruct", help="Pre-trained model name or path")
+    # Data paths
+    parser.add_argument("--train_file", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Train/Train.csv", help="Path to the training data CSV")
+    parser.add_argument("--val_file", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/Test.csv", help="Path to the validation data CSV")
+    # Training hyperparameters
+    parser.add_argument("--num_epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--batch_size", type=int, default=6, help="Batch size")
+    parser.add_argument("--lr", type=float, default=3e-7, help="Learning rate")
     parser.add_argument("--weight_decay", type=float, default=0.0)
-    # LoRA 配置
-    parser.add_argument("--lora_r", type=int, default=8, help="LoRA 中更新矩阵的秩")
-    parser.add_argument("--lora_alpha", type=int, default=16, help="LoRA 缩放因子")
-    parser.add_argument("--lora_dropout", type=float, default=0.3, help="LoRA dropout 概率")
-    #Galore 配置
+    # LoRA configuration
+    parser.add_argument("--lora_r", type=int, default=8, help="The rank of the update matrices in LoRA")
+    parser.add_argument("--lora_alpha", type=int, default=16, help="LoRA scaling factor")
+    parser.add_argument("--lora_dropout", type=float, default=0.3, help="LoRA dropout probability")
+    # GaLore Configuration
     parser.add_argument("--rank", type=int, default=128)
     parser.add_argument("--update_proj_gap", type=int, default=50)
     parser.add_argument("--galore_scale", type=float, default=1.0)
     parser.add_argument("--proj_type", type=str, default="reverse_std")
-    # 模型保存路径
-    parser.add_argument("--save_path", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Best-Models/FFT-GaLore/3e-7/r128/10-epoch", help="保存最佳模型的路径")
-    # 其他参数
-    parser.add_argument("--seed", type=int, default=50, help="随机种子")
-    # 新增参数
-    parser.add_argument("--max_length", type=int, default=512, help="最大序列长度")
-    parser.add_argument("--use_chat_template", action='store_true', help="是否使用 chat template 格式化输入")
-    parser.add_argument("--max_new_tokens", type=int, default=300, help="生成的最大新 token 数量")
+    # Model save path
+    parser.add_argument("--save_path", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Best-Models/FFT-GaLore/3e-7/r128/10-epoch", help="Path to save the best model")
+    # Other parameters
+    parser.add_argument("--seed", type=int, default=50, help="Random seed")
+    # New parameters
+    parser.add_argument("--max_length", type=int, default=512, help="Maximum sequence length")
+    parser.add_argument("--use_chat_template", action='store_true', help="Whether to use chat template to format input")
+    parser.add_argument("--max_new_tokens", type=int, default=300, help="Maximum number of new tokens to generate")
     
     parser.add_argument("--base_model_name", type=str, default="meta-llama/Llama-3.2-3B-Instruct",
-                        help="基础预训练模型名称或路径")
+                        help="Base pre-trained model name or path")
     parser.add_argument("--best_model_path", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Best-Models/FFT-GaLore/3e-7/r128/10-epoch",
-                        help="最佳微调模型的路径")
+                        help="Path to the best fine-tuned model")
     parser.add_argument("--input_files", type=str,
                         default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/Surgical-VQA_V.csv,"
                                 "/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/Segment-MRI_V.csv,"
@@ -76,10 +76,10 @@ def parse_args():
                                 "/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/Track-Instrument_V.csv,"
                                 "/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/2-model_V.csv,"
                                 "/SAN/medic/Surgical_LLM_Agent/11Respawn/Dataset/Test/3-model_V.csv",
-                        help="用逗号分隔的评估文件路径列表")
+                        help="Comma-separated list of evaluation file paths")
     parser.add_argument("--output_dir", type=str, default="/SAN/medic/Surgical_LLM_Agent/11Respawn/Results/FFT-GaLore/3e-7/r128/10-epoch",
-                        help="保存评估结果的输出目录")
-    parser.add_argument("--lr_description", type=str, default="3e-7", help="批大小")
+                        help="Output directory to save evaluation results")
+    parser.add_argument("--lr_description", type=str, default="3e-7", help="Learning rate description")
     return parser.parse_args()
 
 #---------------------------FFT-Galore part-------------------------------------------
@@ -93,8 +93,7 @@ def fft_projection(A, k):
 
         # Step 3: Take real part (or use both real and imag if needed)
         matrix_proj = matrix_fft_reduced.real
-        
-        # 这里我们返回重构后矩阵的前 k 列
+    
         return matrix_proj
 
 class GaLoreProjector:
@@ -164,15 +163,15 @@ class GaLoreProjector:
 
     def get_orthogonal_matrix(self, weights, rank, type):
         """
-        利用 FFT-based 投影得到低秩近似的“正交”矩阵。
+        Use FFT-based projection to obtain a low-rank approximation "orthogonal" matrix.
         
         Args:
-            weights: 包含参数的模块，内部有 data 属性 (tensor)。
-            rank (int): 目标秩。
-            type (str): 'left'、'right' 或 'full'，分别返回左侧、右侧或两者。
+            weights: A module containing parameters, with a data attribute (tensor).
+            rank (int): The target rank.
+            type (str): 'left', 'right', or 'full', returning the left, right, or both matrices respectively.
         
         Returns:
-            对应的低秩近似矩阵或矩阵对。
+            The corresponding low-rank approximation matrix or pair of matrices.
         """
         module_params = weights
 
@@ -184,17 +183,16 @@ class GaLoreProjector:
         else:
             float_data = True
             matrix = module_params.data
-            # I neded to check the shape of the matrix!!!!!! 
 
-        # 使用 FFT-based 投影计算左侧近似：
-        # 得到形状为 (m, rank) 的近似矩阵
+        # Compute the left-hand side approximation using FFT-based projection:
+        # Get an approximation matrix of shape (m, rank)
         A_proj = fft_projection(matrix, k=rank)
 
         if type == 'left':
             result = A_proj
         elif type == 'right':
-            # 对于右侧矩阵，我们对 matrix 的转置做同样的操作，
-            # 得到 (n, rank) 的矩阵，再转置为 (rank, n)
+            # For the right-hand side matrix, we do the same for the matrix transpose.
+            # We get a matrix of (n, rank), which is then transposed to (rank, n).
             A_proj_right = fft_projection(matrix.T, k=rank)
             result = A_proj_right.T
         elif type == 'full':
@@ -205,7 +203,7 @@ class GaLoreProjector:
         else:
             raise ValueError('type should be left, right or full')
 
-        # 如果原数据不是 float，则转换回原来的类型和设备
+        # If the original data is not float, convert it back to the original type and device
         def cast_back(x):
             if not float_data:
                 return x.to(original_device).type(original_type)
@@ -400,7 +398,7 @@ class FFT_GaLoreAdamW(Optimizer):
                 if "step" not in state:
                     state["step"] = 0
 
-                # 如果组中未设置 'dim'，则默认为 2
+                # If 'dim' is not set in the group, default to 2
                 if 'dim' not in group:
                     group['dim'] = 2
 
@@ -462,7 +460,7 @@ class FFT_GaLoreAdamW(Optimizer):
         return loss
 
 
-# ------------------------- 工具函数 -------------------------
+# ------------------------- Utility Functions -------------------------
 def set_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
@@ -472,7 +470,7 @@ def set_seed(seed: int):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-# 示例：生成 prompt 的函数（可根据实际情况修改）
+# Example: Function to generate prompt (can be modified according to actual situation)
 def generate_SM(que: str) -> str:
     return (
         "You are a surgical AI agent assisting in pituitary surgery. Your job is to handle surgeons' queries efficiently by choosing appropriate text-promptable AI models and generating corresponding prompts.\n"
@@ -495,14 +493,14 @@ def extract_question(text):
 def extract_answer(text):
     return text.strip() if pd.notna(text) else ""
 
-# 处理 CSV 数据，构建训练和验证样本
+# Process CSV data to build training and validation samples
 def process_qa_samples(train_file, val_file):
     train_df = pd.read_csv(train_file)
     val_df = pd.read_csv(val_file)
 
     for df, name in [(train_df, 'Train.csv'), (val_df, 'Test.csv')]:
         if 'Input' not in df.columns or 'Label' not in df.columns:
-            print(f"CSV 文件 {name} 缺少 'Input' 或 'Label' 列")
+            print(f"CSV file {name} is missing 'Input' or 'Label' column")
             return
 
     train_qa_samples = []
@@ -530,7 +528,7 @@ def process_qa_samples(train_file, val_file):
     
     return train_qa_samples, valid_qa_samples
 
-# 数据预处理
+# Data preprocessing
 def preprocess_data(example, tokenizer, max_length=260):
     input_text = f"Query:\n{example['question']}\nResponse:\n{example['answer']}"
     inputs = tokenizer(input_text, truncation=True, padding="max_length", max_length=max_length)
@@ -548,7 +546,7 @@ def collate_fn(batch):
     labels = torch.tensor([item["labels"] for item in batch], dtype=torch.long)
     return input_ids, attention_mask, labels
 
-# 保存最佳模型的函数
+# Function to save the best model
 def save_best_model(model, tokenizer, epoch, best_loss, current_loss, save_path):
     new_save_path = f"{save_path}_{epoch}"
     os.makedirs(new_save_path, exist_ok=True)
@@ -563,10 +561,10 @@ def save_best_model(model, tokenizer, epoch, best_loss, current_loss, save_path)
         print(f"Best model saved at epoch {epoch} with validation loss: {best_loss:.4f}")
     return best_loss
 
-# ------------------------- 主训练流程 -------------------------
+# ------------------------- Main Training Process -------------------------
 args = parse_args()
 
-# 设置随机种子
+# Set random seed
 set_seed(args.seed)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -614,9 +612,9 @@ for module_name, module in model.named_modules():
     print('enable GaLore for weights in module: ', module_name)
     galore_params.append(module.weight)
 id_galore_params = [id(p) for p in galore_params]
-# 其他参数归为 regular_params
+# Other parameters are classified as regular_params
 regular_params = [p for p in model.parameters() if id(p) not in id_galore_params]
-# 定义参数组，其中包含额外的 GaLore 配置参数
+# Define parameter groups, including additional GaLore configuration parameters
 param_groups = [
     {'params': regular_params}, 
     {'params': galore_params, 
@@ -626,18 +624,18 @@ param_groups = [
         'proj_type': args.proj_type}
 ]
 
-print("regular_params 元素个数:", len(param_groups[0]['params']))
-print("galore_params 元素个数:", len(param_groups[1]['params']))
-logging.warning(f"regular_params 元素个数: {len(param_groups[0]['params'])}")
-logging.warning(f"galore_params 元素个数: {len(param_groups[1]['params'])}")
-# 假设你已经有了 galore_params 列表和相应的 id 列表
+print("Number of elements in regular_params:", len(param_groups[0]['params']))
+print("Number of elements in galore_params:", len(param_groups[1]['params']))
+logging.warning(f"Number of elements in regular_params: {len(param_groups[0]['params'])}")
+logging.warning(f"Number of elements in galore_params: {len(param_groups[1]['params'])}")
+# Assume you already have the galore_params list and the corresponding id list
 galore_ids = set(id(p) for p in galore_params)
 for name, param in model.named_parameters():
     if id(param) in galore_ids:
         print(f"{name}: {param.requires_grad}")
         logging.warning(f"{name}: {param.requires_grad}")
 
-# logging.warning("参数组配置如下：")
+# logging.warning("Parameter group configuration is as follows:")
 # for i, group in enumerate(param_groups):
 #     if i == 1:
 #         logging.warning(f"Group {i}: {group}")
@@ -645,12 +643,12 @@ for name, param in model.named_parameters():
 #     logging.warning(f"rank is {param_groups[1]['rank']}")
 #     logging.warning("Fuck!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 # else:
-#     logging.warning("还真没有我草。。。。。。。")
-# logging.warning("参数组配置结束")
+#     logging.warning("It's really not there, damn it...")
+# logging.warning("Parameter group configuration ends")
 
 trainable_params = param_groups
 
-# 读取数据并预处理
+# Read and preprocess data
 train_qa_samples, valid_qa_samples = process_qa_samples(args.train_file, args.val_file)
 dataset_train = Dataset.from_list(train_qa_samples).map(lambda ex: preprocess_data(ex, tokenizer), remove_columns=["question", "answer"])
 dataset_valid = Dataset.from_list(valid_qa_samples).map(lambda ex: preprocess_data(ex, tokenizer), remove_columns=["question", "answer"])
@@ -687,16 +685,16 @@ def train(model, train_loader, valid_loader, optimizer, criterion, num_epochs, s
     logging.warning("Start Training!")
     
     total_batches = len(train_loader)
-    print(f"总共 {total_batches} 个 batch")
+    print(f"Total {total_batches} batches")
     
     for epoch in range(num_epochs):
-        epoch_start_time = time.time()  # 记录 epoch 开始时间
+        epoch_start_time = time.time()  # Record epoch start time
         model.train()
         total_train_loss = 0
-        batch_times = []  # 用于存储每个 batch 的耗时
+        batch_times = []  # To store the time taken for each batch
         
         for batch_idx, batch in enumerate(train_loader):
-            batch_start_time = time.time()  # 记录 batch 开始时间
+            batch_start_time = time.time()  # Record batch start time
             
             input_ids, attention_mask, labels = [x.to(device) for x in batch]
             optimizer.zero_grad()
@@ -711,26 +709,26 @@ def train(model, train_loader, valid_loader, optimizer, criterion, num_epochs, s
             optimizer.step()
             total_train_loss += loss.item()
             
-            batch_end_time = time.time()  # 记录 batch 结束时间
-            batch_time = batch_end_time - batch_start_time  # 计算当前 batch 的耗时
-            logging.warning(f"Epoch {epoch+1}, Batch {batch_idx+1}/{total_batches} 耗时: {batch_time:.4f}秒")
+            batch_end_time = time.time()  # Record batch end time
+            batch_time = batch_end_time - batch_start_time  # Calculate time taken for the current batch
+            logging.warning(f"Epoch {epoch+1}, Batch {batch_idx+1}/{total_batches} time: {batch_time:.4f}s")
             batch_times.append(batch_time)
-            print(f"Epoch {epoch+1}, Batch {batch_idx+1}/{total_batches} 耗时: {batch_time:.4f}秒")
+            print(f"Epoch {epoch+1}, Batch {batch_idx+1}/{total_batches} time: {batch_time:.4f}s")
             logging.warning(f"Loss: {loss.item()}")
         
-        # 计算平均每个 batch 的耗时
+        # Calculate average time per batch
         avg_batch_time = sum(batch_times) / len(batch_times)
-        epoch_end_time = time.time()  # 记录 epoch 结束时间
-        epoch_time = epoch_end_time - epoch_start_time  # 计算整个 epoch 的耗时
+        epoch_end_time = time.time()  # Record epoch end time
+        epoch_time = epoch_end_time - epoch_start_time  # Calculate total time for the epoch
         
         avg_train_loss = total_train_loss / total_batches
         avg_val_loss = validate(model, valid_loader, criterion)
         
         print(f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {avg_train_loss:.4f}, "
-              f"Test Loss: {avg_val_loss:.4f}, Epoch 耗时: {epoch_time:.2f}秒, 平均每个 Batch 耗时: {avg_batch_time:.4f}秒")
+              f"Test Loss: {avg_val_loss:.4f}, Epoch time: {epoch_time:.2f}s, Average Batch time: {avg_batch_time:.4f}s")
         logging.warning(
             f"Epoch {epoch + 1}/{num_epochs}, Train Loss: {avg_train_loss:.4f}, "
-            f"Test Loss: {avg_val_loss:.4f}, Epoch 耗时: {epoch_time:.2f}秒, 平均每个 Batch 耗时: {avg_batch_time:.4f}秒, LR Description: {args.lr_description}"
+            f"Test Loss: {avg_val_loss:.4f}, Epoch time: {epoch_time:.2f}s, Average Batch time: {avg_batch_time:.4f}s, LR Description: {args.lr_description}"
         )
         best_val_loss = save_best_model(model, tokenizer, epoch + 1, best_val_loss, avg_val_loss, save_path)
 
@@ -773,7 +771,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-# ------------------------- 工具函数 -------------------------
+# ------------------------- Utility Functions -------------------------
 def generate_SM(que: str) -> str:
     return (
         "You are a surgical AI agent assisting in pituitary surgery. Your job is to handle surgeons' queries efficiently by choosing appropriate text-promptable AI models and generating corresponding prompts.\n"
@@ -798,7 +796,7 @@ def format_data(sample):
     ]
 
 def custom_collate_fn(sample):
-    # 保持 DataLoader 返回的样本格式不变
+    # Keep the format of samples returned by DataLoader unchanged
     return sample
 
 def generate_answer(question, model, tokenizer):
@@ -811,7 +809,7 @@ def generate_answer(question, model, tokenizer):
     return answer
 
 def extract_prompt(entry):
-    # 提取所有以 "Prompt:" 开头的行内容，并用 "|" 连接
+    # Extract the content of all lines starting with "Prompt:" and join them with "|"
     prompts = [line[len("Prompt: "):].strip() for line in entry.split('\n') if line.startswith("Prompt:")]
     return "|".join(prompts) if prompts else ""
 
@@ -828,16 +826,16 @@ def group_by_sentence_position(all_prompts, num_sentences):
 
 def compute_metrics(grouped_pred_prompts, grouped_ans_prompts):
     """
-    使用 Hugging Face evaluate 库计算 ROUGE、BLEU 和 METEOR 指标。
+    Calculate ROUGE, BLEU, and METEOR metrics using the Hugging Face evaluate library.
     
-    参数:
-        grouped_pred_prompts: 一个列表，每个元素为一组预测 prompt（列表形式，每个元素为一句文本）
-        grouped_ans_prompts: 一个列表，每个元素为一组真实 prompt（列表形式，每个元素为一句文本）
+    Parameters:
+        grouped_pred_prompts: A list where each element is a group of predicted prompts (list of strings).
+        grouped_ans_prompts: A list where each element is a group of true prompts (list of strings).
     
-    返回:
-        rouge_results: 每组的 ROUGE 指标列表
-        bleu_scores: 每组的 BLEU 分数列表
-        meteor_scores: 每组的 METEOR 分数列表
+    Returns:
+        rouge_results: A list of ROUGE metrics for each group.
+        bleu_scores: A list of BLEU scores for each group.
+        meteor_scores: A list of METEOR scores for each group.
     """
     rouge = evaluate.load("rouge")
     bleu = evaluate.load("bleu")
@@ -851,38 +849,38 @@ def compute_metrics(grouped_pred_prompts, grouped_ans_prompts):
         pred_group = grouped_pred_prompts[i]
         ans_group = grouped_ans_prompts[i]
         
-        # ROUGE：直接传入预测和参考文本列表
+        # ROUGE: Directly pass the list of predicted and reference texts
         rouge_result = rouge.compute(predictions=pred_group, references=ans_group)
         rouge_results.append(rouge_result)
         
-        # BLEU：参考文本需要以列表嵌套列表的形式传入
+        # BLEU: Reference texts need to be passed in a list of lists format
         bleu_result = bleu.compute(predictions=pred_group, references=[[ref] for ref in ans_group])
         bleu_scores.append({"bleu1": bleu_result["precisions"][0],
             "bleu2": bleu_result["precisions"][1],
             "bleu3": bleu_result["precisions"][2],
             "bleu4": bleu_result["precisions"][3]})
         
-        # METEOR：直接传入预测和参考文本列表
+        # METEOR: Directly pass the list of predicted and reference texts
         meteor_result = meteor.compute(predictions=pred_group, references=ans_group)
         meteor_scores.append(meteor_result["meteor"])
     
     return rouge_results, bleu_scores, meteor_scores
 
 def extract_model(text, model_names):
-    # 利用正则表达式匹配列表中的模型名称
+    # Use regular expressions to match model names from the list
     matches = re.findall(r'\b(?:' + '|'.join(map(re.escape, model_names)) + r')\b', text)
     return "|".join(matches) if matches else ""
 
 def match_rate_per_Cat(pred_models_format, true_models_format):
-    # 初始化计数器
+    # Initialize counters
     first_model_match_count = 0
     second_model_match_count = 0
     third_model_match_count = 0
     total_count = len(true_models_format)
 
-    # 遍历两个列表
+    # Iterate through both lists
     for pred, true in zip(pred_models_format, true_models_format):
-        # 分割模型名字
+        # Split model names
         pred_models = pred.split("|")
         true_models = true.split("|")
         while len(pred_models) < len(true_models):
@@ -899,7 +897,7 @@ def match_rate_per_Cat(pred_models_format, true_models_format):
         if len(true_models) > 2 and pred_models[2] == true_models[2]:
             third_model_match_count += 1
 
-    # 计算匹配度百分比
+    # Calculate matching percentage
     first_model_match_rate = (first_model_match_count / total_count * 100) if total_count > 0 else 0
     second_model_match_rate = (second_model_match_count / total_count * 100) if total_count > 0 else 0
     third_model_match_rate = (third_model_match_count / total_count * 100) if total_count > 0 else 0
@@ -915,44 +913,44 @@ def f1_score_set(pred_list, true_list):
 
 def evaluate_f1_by_selection_count(pred_models_format, true_models_format):
     """
-    分别计算 agent 在选出 1 个、2 个和 3 个模型时的 F1 score。
+    Calculate the F1 score for the agent when selecting 1, 2, and 3 models respectively.
     
-    参数:
-        pred_models_format: 一个列表，每个元素为字符串，多个模型名称以 '|' 分隔，表示 agent 的预测
-        true_models_format: 一个列表，每个元素为字符串，多个模型名称以 '|' 分隔，表示真实的模型
-    返回:
-        avg_one_model_f1: 所有真实模型数为 1 的样本的平均 F1 score
-        avg_two_model_f1: 所有真实模型数为 2 的样本的平均 F1 score
-        avg_three_model_f1: 所有真实模型数为 3 的样本的平均 F1 score
+    Parameters:
+        pred_models_format: A list of strings, where multiple model names are separated by '|', representing the agent's predictions.
+        true_models_format: A list of strings, where multiple model names are separated by '|', representing the true models.
+    Returns:
+        avg_one_model_f1: The average F1 score for all samples where the true number of models is 1.
+        avg_two_model_f1: The average F1 score for all samples where the true number of models is 2.
+        avg_three_model_f1: The average F1 score for all samples where the true number of models is 3.
     """
     one_model_scores = []
     two_model_scores = []
     three_model_scores = []
     
     for pred, true in zip(pred_models_format, true_models_format):
-        # 分割字符串并去除多余空格
+        # Split strings and remove extra spaces
         pred_models = [m.strip() for m in pred.split("|")]
         true_models = [m.strip() for m in true.split("|")]
         
-        # 如果预测数不足，补充空字符串（可选，根据需要调整）
+        # If the number of predictions is insufficient, add empty strings (optional, adjust as needed)
         while len(pred_models) < len(true_models):
             pred_models.append("")
         
-        # 根据真实模型数量分类计算
+        # Calculate based on the number of true models
         if len(true_models) == 1:
-            # 对于一个模型的情况，取第一个
+            # For the case of one model, take the first one
             score = f1_score_set(pred_models[:1], true_models[:1])
             one_model_scores.append(score)
         elif len(true_models) == 2:
-            # 对于两个模型的情况，取前两个
+            # For the case of two models, take the first two
             score = f1_score_set(pred_models[:2], true_models[:2])
             two_model_scores.append(score)
         elif len(true_models) == 3:
-            # 对于三个模型的情况，取前三个
+            # For the case of three models, take the first three
             score = f1_score_set(pred_models[:3], true_models[:3])
             three_model_scores.append(score)
         else:
-            # 如果样本中真实模型的数量不是 1、2 或 3，可根据需要处理（这里忽略）
+            # If the number of true models in the sample is not 1, 2, or 3, handle as needed (ignored here)
             continue
 
     avg_one_model_f1 = sum(one_model_scores) / len(one_model_scores) if one_model_scores else 0
@@ -972,10 +970,10 @@ class TextQuestionLabelDataset(Dataset):
     def __getitem__(self, idx):
         return self.questions[idx], self.labels[idx]
 
-# ------------------------- 主评估流程 -------------------------
+# ------------------------- Main Evaluation Process -------------------------
 args = parse_args()
 
-# 创建输出目录
+# Create output directory
 os.makedirs(args.output_dir, exist_ok=True)
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -983,12 +981,12 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_use_double_quant=True,  # Uses secondary quantization for better precision
     bnb_4bit_compute_dtype=torch.float16  # Keeps computation in FP16 for stability
 )
-# 加载基础模型和 tokenizer
+# Load base model and tokenizer
 model = AutoModelForCausalLM.from_pretrained(args.best_model_path, quantization_config=bnb_config, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(args.best_model_path, use_fast=False)
 tokenizer.pad_token = tokenizer.eos_token
 
-# 解析输入文件列表
+# Parse input file list
 input_files = [f.strip() for f in args.input_files.split(",") if f.strip()]
 
 for input_file in input_files:
@@ -1002,7 +1000,7 @@ for input_file in input_files:
     all_pred = []
     all_ans = []
     
-    # 推理过程
+    # Inference process
     model.eval()
     with torch.no_grad():
         for batch in test_loader:
@@ -1016,7 +1014,7 @@ for input_file in input_files:
             all_pred.extend(temp_pred)
             all_ans.extend(temp_ans)
     
-    # 保存预测结果
+    # Save prediction results
     base_filename = os.path.basename(input_file).replace(".csv", "")
     pred_output_file = os.path.join(args.output_dir, f"{base_filename}_pred.txt")
     with open(pred_output_file, "w") as f:
@@ -1025,7 +1023,7 @@ for input_file in input_files:
             f.write(f"ans: {ans_text}\n\n")
     print(f"Saved predictions to {pred_output_file}")
     
-    # 基于 prompt 的评价
+    # Prompt-based evaluation
     all_pred_prompts = all_pred
     all_ans_prompts = all_ans
     num_sentences = len(all_ans_prompts[0].split("|"))
@@ -1034,7 +1032,7 @@ for input_file in input_files:
     
     rouge_results, bleu_scores, meteor_scores = compute_metrics(grouped_pred_prompts, grouped_ans_prompts)
     
-    # 模型选择准确率评价
+    # Model selection accuracy evaluation
     model_names = ["Segment-MRI", "Segment-Video", "Track-Instrument", "Surgical-VQA", "Overlaying"]
     pred_models = [extract_model(pred, model_names=model_names).strip() for pred in all_pred]
     true_models = [extract_model(ans, model_names=model_names).strip() for ans in all_ans]
@@ -1065,40 +1063,40 @@ for input_file in input_files:
 print("All files processed!")
 
 
-# ========================= 代码1：评估指标提取和计算 =========================
+# ========================= Code 1: Metric Extraction and Calculation =========================
 
 def extract_evaluation_values(file_path):
     """
-    从evaluation.txt文件中提取各指标的数值：
-      - rouge1, rougeL: 从Rouge Scores中提取
-      - bleu1, bleu2, bleu3, bleu4: 从BLEU Score中提取
-      - METEOR: 从METEOR Score中提取
-      - F1: 提取F1 score相关数值
-      - Matching Accuracy: 提取Matching Accuracy数值
+    Extract numerical values of various metrics from the evaluation.txt file:
+      - rouge1, rougeL: Extracted from Rouge Scores
+      - bleu1, bleu2, bleu3, bleu4: Extracted from BLEU Score
+      - METEOR: Extracted from METEOR Score
+      - F1: Extract F1 score related values
+      - Matching Accuracy: Extract Matching Accuracy values
     """
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 提取ROUGE指标
+    # Extract ROUGE metrics
     rouge1_matches = re.findall(r"'rouge1':\s*([0-9]*\.?[0-9]+)", content)
     rougeL_matches = re.findall(r"'rougeL':\s*([0-9]*\.?[0-9]+)", content)
     
-    # 提取BLEU指标
+    # Extract BLEU metrics
     bleu1_matches = re.findall(r"'bleu1':\s*([0-9]*\.?[0-9]+)", content)
     bleu2_matches = re.findall(r"'bleu2':\s*([0-9]*\.?[0-9]+)", content)
     bleu3_matches = re.findall(r"'bleu3':\s*([0-9]*\.?[0-9]+)", content)
     bleu4_matches = re.findall(r"'bleu4':\s*([0-9]*\.?[0-9]+)", content)
     
-    # 提取METEOR指标
+    # Extract METEOR metric
     meteor_matches = re.findall(r"'meteor':\s*([0-9]*\.?[0-9]+)", content)
     
-    # 提取F1指标（所有类型的F1 score）
+    # Extract F1 metric (all types of F1 scores)
     file_name = os.path.basename(file_path)
     first_char = file_name.lstrip()[0] if file_name.lstrip() else ''
     if first_char == '2':
-        f1_pattern = r"F1 score of two models:\s*([0-9]*\.?[0-9]+)"
+        f1_pattern = r"F1 score for two models:\s*([0-9]*\.?[0-9]+)"
     elif first_char == '3':
-        f1_pattern = r"F1 score of three models:\s*([0-9]*\.?[0-9]+)"
+        f1_pattern = r"F1 score for three models:\s*([0-9]*\.?[0-9]+)"
     else:
         f1_pattern = r"F1 score of current model:\s*([0-9]*\.?[0-9]+)"
     f1_matches = re.findall(f1_pattern, content)
@@ -1123,13 +1121,13 @@ def extract_evaluation_values(file_path):
     }
 
 def compute_average(values):
-    """计算列表平均值，若列表为空则返回 0"""
+    """Calculate the average of a list, return 0 if the list is empty"""
     return sum(values) / len(values) if values else 0
 
 def process_evaluation_files(output_dir):
     """
-    读取output_dir中所有以_evaluation.txt结尾的文件，
-    提取各指标数值，计算平均值后保存为average.txt和average.csv
+    Read all files ending with _evaluation.txt in output_dir,
+    extract metric values, calculate averages, and save as average.txt and average.csv
     """
     all_values = {
         'rouge1': [],
@@ -1144,7 +1142,7 @@ def process_evaluation_files(output_dir):
     }
     
     evaluation_files = []
-    # 遍历output_dir中所有以_evaluation.txt结尾的文件
+    # Iterate through all files in output_dir ending with _evaluation.txt
     for file in os.listdir(output_dir):
         if file.endswith("_evaluation.txt"):
             evaluation_files.append(file)
@@ -1159,10 +1157,10 @@ def process_evaluation_files(output_dir):
     
     print("Found {} evaluation files: {}".format(len(evaluation_files), evaluation_files))
     
-    # 计算平均值
+    # Calculate averages
     averages = {key: compute_average(all_values[key]) for key in all_values}
     
-    # 生成 average.txt 文件
+    # Generate average.txt file
     avg_txt_file = os.path.join(output_dir, "average.txt")
     with open(avg_txt_file, 'w', encoding='utf-8') as out:
         out.write("Average rouge1: {:.4f}\n".format(averages['rouge1']))
@@ -1176,15 +1174,15 @@ def process_evaluation_files(output_dir):
         out.write("Average Matching Accuracy: {:.4f}\n".format(averages['Matching_Accuracy']))
     print("Average results saved to: {}".format(avg_txt_file))
     
-    # 生成 average.csv 文件
+    # Generate average.csv file
     avg_csv_file = os.path.join(output_dir, "average.csv")
     with open(avg_csv_file, 'w', encoding='utf-8') as csv_out:
-        # CSV 表头（列名称）
+        # CSV header (column names)
         headers = ["Average bleu1 Score", "Average bleu2 Score", "Average bleu3 Score", 
                   "Average bleu4 Score", "Average rouge1", "Average rougeL",
                   "Average METEOR Score", "Average F1 Score", "Average Matching Accuracy"]
         
-        # 将平均值乘以 100，转换为百分比数值（保留两位小数），Matching_Accuracy不乘100因为已经是百分比
+        # Multiply average values by 100 to convert to percentage values (rounded to two decimal places), Matching_Accuracy is not multiplied by 100 as it is already a percentage
         values = [
             averages['bleu1'] * 100,
             averages['bleu2'] * 100,
@@ -1194,16 +1192,16 @@ def process_evaluation_files(output_dir):
             averages['rougeL'] * 100,
             averages['METEOR'] * 100,
             averages['F1'] * 100,
-            averages['Matching_Accuracy']  # 这个已经是百分比，不需要乘100
+            averages['Matching_Accuracy']  # This is already a percentage, no need to multiply by 100
         ]
         
-        # 写入 CSV 文件，先写入表头，再写入数据行
+        # Write to CSV file, first write the header, then the data row
         csv_out.write(",".join(headers) + "\n")
         csv_out.write(",".join("{:.2f}".format(val) for val in values) + "\n")
     print("Average CSV file saved to: {}".format(avg_csv_file))
     
     return averages
 
-# 自动处理evaluation文件并生成平均结果
+# Automatically process evaluation files and generate average results
 print("Processing evaluation files to generate average results...")
 process_evaluation_files(args.output_dir)
